@@ -1,15 +1,22 @@
 'use strict';
 
-juke.controller('AlbumCtrl', function ($scope, $http, $rootScope, $log, StatsFactory, PlayerFactory) {
-
-  function getData(res) { return res.data; };
+juke.controller('AlbumCtrl', function ($scope, $rootScope, $log, StatsFactory, PlayerFactory) {
 
   // load our initial data
-  var albums = PlayerFactory.fetchAlbums()
-  for (var key in albums) {
-      $scope.album = albums[key];
-      console.log(albums[key]);
-  };
+  PlayerFactory.fetchById()
+  .then(function(album) {
+    album.imageUrl = '/api/albums/' + album.id + '/image';
+    album.songs.forEach(function (song, i) {
+      song.audioUrl = '/api/songs/' + song.id + '/audio';
+      song.albumIndex = i;   
+    });
+    $scope.album = album;
+  });
+
+  // for (var key in albums) {
+  //     console.log(albums[key]);
+  //     $scope.album = albums[key];
+  // };
   // StatsFactory.totalTime($scope.album)
   // .then(function (albumDuration) {
   //   $scope.fullDuration = albumDuration;
