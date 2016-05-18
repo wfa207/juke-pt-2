@@ -1,26 +1,21 @@
 'use strict';
 
-juke.controller('AlbumCtrl', function ($scope, $rootScope, $log, StatsFactory, PlayerFactory) {
+juke.controller('AlbumCtrl', function ($scope, $rootScope, $log, AlbumFactory, StatsFactory) {
 
   // load our initial data
-  PlayerFactory.fetchById()
+  AlbumFactory.fetchById(0)
   .then(function(album) {
-    album.imageUrl = '/api/albums/' + album.id + '/image';
-    album.songs.forEach(function (song, i) {
-      song.audioUrl = '/api/songs/' + song.id + '/audio';
-      song.albumIndex = i;   
-    });
-    $scope.album = album;
+      album.imageUrl = '/api/albums/' + album.id + '/image';
+      album.songs.forEach(function (song, i) {
+        song.audioUrl = '/api/songs/' + song.id + '/audio';
+        song.albumIndex = i;   
+      });
+      $scope.album = album;
+      StatsFactory.totalTime(album)
+      .then(function(duration) {
+        $scope.fullDuration = duration;
+      });
   });
-
-  // for (var key in albums) {
-  //     console.log(albums[key]);
-  //     $scope.album = albums[key];
-  // };
-  // StatsFactory.totalTime($scope.album)
-  // .then(function (albumDuration) {
-  //   $scope.fullDuration = albumDuration;
-  // });
 
 
   // main toggle
@@ -59,4 +54,20 @@ juke.controller('AlbumCtrl', function ($scope, $rootScope, $log, StatsFactory, P
   function next () { skip(1); };
   function prev () { skip(-1); };
 
+});
+
+juke.controller('AlbumsCtrl', function($scope, $rootScope, $log, AlbumFactory) {
+
+  AlbumFactory.fetchAll()
+  .then(function(albums) {
+    $scope.albums = albums;
+    
+    albums.forEach(function(album) {
+      album.imageUrl = '/api/albums/' + album.id + '/image';
+      AlbumFactory.fetchSongs(album)
+      .then(function(songs) {
+        album.songs = songs;
+      })
+    });
+  });
 });

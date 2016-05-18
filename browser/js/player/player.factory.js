@@ -11,22 +11,30 @@ function getData(res) { return res.data; };
 ----------------------------------------------------------
 */
 
-juke.factory('PlayerFactory', function($http, $log){
-  var playerObj = {};
+juke.factory('AlbumFactory', function($http, $log, StatsFactory){
+  var albumObj = {};
 
-	playerObj.fetchAll = function() {
+	albumObj.fetchAll = function() {
 	  	return $http.get('/api/albums/').then(getData);
 	};
   
-  playerObj.fetchById = function() {
+  albumObj.fetchById = function(idx) {
   	return this.fetchAll()
 	  .then(function (albums) {
-	    return $http.get('/api/albums/' + albums[0].id); // temp: get one
+	    return $http.get('/api/albums/' + albums[idx].id); // temp: get one
 	  })
 	  .then(getData);
   };
 
-  return playerObj;
+  albumObj.fetchSongs = function(album) {
+  	return $http.get('/api/albums/' + album.id)
+  	.then(getData)
+  	.then(function(albumData) {
+  		return albumData.songs;
+  	});
+  }
+
+  return albumObj;
 
 });
 
@@ -50,9 +58,39 @@ juke.factory('StatsFactory', function ($q) {
       });
 
       resolveOrRecur();
-      
+
     });
   };
 
   return statsObj;
+});
+
+juke.factory('PlayerFactory', function($log) {
+	var playerObj = {};
+
+	playerObj.getCurrentSong = function() {};
+	playerObj.isPlaying = function() {};
+
+  playerObj.pause = function pause (scope) {
+    audio.pause();
+    scope.playing = false;
+  }
+
+  playerObj.play = function play (event, song, scope) {
+    // stop existing audio (e.g. other song) in any case
+    pause();
+    scope.playing = true;
+    // resume current song
+    if (song === $scope.currentSong) return audio.play();
+    // enable loading new song
+    scope.currentSong = song;
+    audio.src = song.audioUrl;
+    audio.load();
+    audio.play();
+  }
+
+  playerObj.next = function (rootScope) { pause(); rootScope.$broadcast('next'); };
+  playerObj.prev = function (rootScope) { pause(); rootScope.$broadcast('prev'); };
+
+	return playerObj;
 });
